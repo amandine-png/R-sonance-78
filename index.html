@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Rapport de performance — Résonance 78</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --linen:#EDEBE5;
+    --beige:#F4F2EF;
+    --haze:#DBE4EA;
+    --haze-2:#c9d7e2;
+    --pulse:#3568F6;
+    --pulse-dark:#2952d1;
+    --pulse-soft:rgba(53,104,246,.08);
+    --darkblue:#0B355F;
+    --amber:#D98A3D;
+    --amber-soft:rgba(217,138,61,.12);
+    --green:#1F7A4D;
+    --black:#111011;
+    --white:#FFFFFF;
+    --gray:#6b7480;
+    --line:#e6e1d5;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',-apple-system,sans-serif;
+    background:var(--linen);
+    color:var(--black);
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(53,104,246,.07), transparent 42%),
+      radial-gradient(circle at 0% 30%, rgba(11,53,95,.05), transparent 40%);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 24px 80px;}
+  h1,h2,h3{font-family:'Crimson Pro',Georgia,serif;font-weight:600;}
+
+  header{
+    position:relative;
+    background:linear-gradient(135deg,var(--pulse) 0%,var(--pulse-dark) 100%);
+    color:#fff;
+    border-radius:22px;
+    padding:44px 44px 40px;
+    margin-bottom:30px;
+    overflow:hidden;
+    box-shadow:0 12px 30px -12px rgba(37,73,180,.45);
+  }
+  header .wire{position:absolute;top:0;right:0;width:62%;height:100%;opacity:.32;pointer-events:none;}
+  header h1{margin:6px 0 9px;font-size:34px;color:#fff;position:relative;z-index:1;letter-spacing:-.01em;}
+  header p{margin:0;color:rgba(255,255,255,.85);font-size:15px;font-family:'Inter',sans-serif;position:relative;z-index:1;}
+  .badge{
+    display:inline-block;background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.28);
+    padding:7px 16px;border-radius:999px;font-size:12.5px;margin-top:18px;
+    position:relative;z-index:1;font-family:'Inter',sans-serif;font-weight:600;letter-spacing:.01em;
+  }
+
+  /* TABS */
+  .tabs{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+  .tab-btn{
+    flex:1;min-width:180px;padding:16px 20px;border-radius:16px;border:1px solid var(--line);
+    background:var(--white);cursor:pointer;text-align:left;font-family:'Inter',sans-serif;
+    transition:all .15s ease;box-shadow:0 2px 8px -4px rgba(11,53,95,.08);
+  }
+  .tab-btn:hover{border-color:var(--pulse);box-shadow:0 4px 14px -6px rgba(53,104,246,.35);}
+  .tab-btn .tb-name{font-family:'Crimson Pro',serif;font-weight:700;font-size:18px;color:var(--darkblue);display:block;}
+  .tab-btn .tb-sub{font-size:11.5px;color:var(--gray);margin-top:4px;display:block;}
+  .tab-btn.active{background:linear-gradient(135deg,var(--pulse) 0%,var(--pulse-dark) 100%);border-color:var(--pulse-dark);}
+  .tab-btn.active .tb-name,.tab-btn.active .tb-sub{color:#fff;}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  section{
+    position:relative;
+    background:var(--white);border:1px solid var(--line);border-radius:20px;
+    padding:32px 34px 30px;margin-bottom:24px;
+    box-shadow:0 4px 18px -8px rgba(11,53,95,.10);
+  }
+  section::before{
+    content:"";position:absolute;top:0;left:26px;right:26px;height:3px;border-radius:0 0 4px 4px;
+    background:linear-gradient(90deg,var(--pulse),var(--pulse-soft));
+  }
+  section.highlight::before{background:linear-gradient(90deg,var(--amber),var(--amber-soft));}
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px;}
+  section h2{
+    font-size:20px;margin:0;color:var(--darkblue);
+    display:flex;align-items:center;gap:11px;
+  }
+  .icn{
+    width:32px;height:32px;border-radius:10px;background:var(--pulse-soft);
+    display:flex;align-items:center;justify-content:center;flex:0 0 32px;
+  }
+  .icn svg{stroke:var(--pulse);}
+  .icn.amber{background:var(--amber-soft);}
+  .icn.amber svg{stroke:var(--amber);}
+  .pill{
+    font-size:11px;font-weight:600;color:var(--pulse-dark);background:var(--pulse-soft);
+    padding:4px 11px;border-radius:999px;font-family:'Inter',sans-serif;white-space:nowrap;
+  }
+  .pill.amber{color:#8a5a20;background:var(--amber-soft);}
+  section .sub{color:var(--gray);font-size:12.5px;margin:6px 0 20px;font-family:'Inter',sans-serif;line-height:1.6;}
+
+  .tbl-wrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(11,53,95,.04);}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;}
+  thead th{
+    color:#fff;background:var(--darkblue);font-weight:600;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.07em;padding:13px 16px;text-align:right;
+  }
+  thead th:first-child{text-align:left;}
+  th.total,thead th.total{background:var(--pulse-dark);}
+  td{padding:12.5px 16px;text-align:right;border-bottom:1px solid var(--line);color:var(--black);}
+  td:first-child{text-align:left;color:var(--darkblue);font-weight:600;}
+  td .pct{color:var(--gray);font-weight:500;font-size:12px;}
+  tbody tr:nth-child(even){background:var(--beige);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover td{background:var(--pulse-soft);}
+  td.total{font-weight:700;color:var(--darkblue);background:var(--haze)!important;}
+  tbody tr:hover td.total{background:var(--haze-2)!important;}
+  tr.subtle td{color:var(--gray);font-style:italic;font-size:12.5px;}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:4px;}
+  .kpi-card{
+    position:relative;border:1px solid var(--line);border-radius:16px;padding:20px 18px;text-align:center;
+    background:linear-gradient(160deg,var(--beige),var(--white));
+  }
+  .kpi-card::before{
+    content:"";position:absolute;top:0;left:18px;right:18px;height:3px;border-radius:0 0 4px 4px;
+    background:var(--pulse);
+  }
+  .kpi-card .label{font-size:11.5px;color:var(--gray);margin-bottom:12px;line-height:1.4;min-height:32px;font-family:'Inter',sans-serif;font-weight:500;}
+  .kpi-card .value{font-family:'Crimson Pro',serif;font-size:30px;font-weight:700;color:var(--darkblue);line-height:1;}
+  .kpi-card .value.small{font-size:24px;}
+  .kpi-card .value.green{color:var(--green);}
+  .kpi-card .foot{font-size:10.5px;color:var(--gray);margin-top:9px;font-family:'Inter',sans-serif;padding-top:9px;border-top:1px dashed var(--line);}
+
+  .repartition-card{
+    border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(11,53,95,.04);
+    background:linear-gradient(160deg,var(--beige),var(--white));
+    padding:28px 30px;
+  }
+  .repartition-grid{display:flex;align-items:center;gap:38px;flex-wrap:wrap;}
+  .donut-wrap{flex:0 0 208px;display:flex;justify-content:center;}
+  .donut{
+    width:208px;height:208px;border-radius:50%;position:relative;
+    box-shadow:0 10px 26px -12px rgba(11,53,95,.35), inset 0 0 0 1px rgba(255,255,255,.4);
+  }
+  .donut-hole{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:126px;height:126px;background:var(--white);border-radius:50%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 1px var(--line), 0 2px 6px rgba(11,53,95,.06);
+  }
+  .donut-total{font-family:'Crimson Pro',serif;font-size:24px;font-weight:700;color:var(--darkblue);line-height:1;}
+  .donut-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;font-family:'Inter',sans-serif;}
+
+  .legend-list{flex:1;min-width:290px;display:flex;flex-direction:column;}
+  .legend-row{display:flex;align-items:center;gap:11px;padding:8.5px 6px;border-bottom:1px solid var(--line);border-radius:8px;}
+  .legend-row:last-child{border-bottom:none;}
+  .legend-row:hover{background:rgba(255,255,255,.7);}
+  .dot{width:11px;height:11px;border-radius:3px;flex:0 0 11px;box-shadow:0 0 0 3px rgba(255,255,255,.5) inset;}
+  .legend-label{flex:1;font-size:13px;font-weight:600;color:var(--darkblue);}
+  .legend-count{flex:0 0 50px;text-align:right;font-size:13px;font-weight:600;color:var(--black);font-variant-numeric:tabular-nums;}
+  .legend-pct{flex:0 0 60px;text-align:right;font-size:12px;font-weight:700;color:var(--white);font-variant-numeric:tabular-nums;background:var(--darkblue);border-radius:999px;padding:2px 9px;margin-left:4px;}
+  @media (max-width:760px){
+    .repartition-grid{flex-direction:column;}
+    .legend-list{width:100%;}
+  }
+
+  .bars-list{display:flex;flex-direction:column;gap:13px;margin:6px 0 4px;}
+  .bar-item{display:grid;grid-template-columns:230px 1fr 56px;align-items:center;gap:14px;}
+  .bar-item .bl{font-size:12.5px;color:var(--darkblue);font-weight:600;text-align:right;}
+  .bar-track{height:16px;border-radius:999px;background:var(--haze);overflow:hidden;}
+  .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--pulse),var(--pulse-dark));}
+  .bar-fill.amber{background:linear-gradient(90deg,var(--amber),#b96f26);}
+  .bar-item .bv{font-size:13px;font-weight:700;color:var(--darkblue);text-align:right;font-variant-numeric:tabular-nums;}
+  @media (max-width:760px){
+    .bar-item{grid-template-columns:140px 1fr 46px;}
+    .bar-item .bl{font-size:11.5px;}
+  }
+
+  .mockup{
+    border:1px solid var(--line);border-radius:14px;background:var(--beige);padding:18px 20px;margin-top:6px;
+  }
+  .mockup .mh{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--darkblue);font-size:13px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .mockup p{font-size:12.5px;color:var(--black);font-family:'Inter',sans-serif;line-height:1.6;margin:0 0 10px;}
+
+  /* VISION PRODUIT — TIMELINE */
+  .rm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px;}
+  .rm-head{background:var(--darkblue);color:#fff;text-align:center;padding:12px 10px;border-radius:10px;font-weight:700;font-family:'Crimson Pro',serif;font-size:16px;}
+  .rm-item{border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.55;color:var(--darkblue);font-family:'Inter',sans-serif;}
+  .rm-item h4{font-family:'Crimson Pro',serif;font-weight:600;font-size:14.5px;margin:0 0 4px;color:var(--darkblue);}
+  .rm-item p{margin:0;color:var(--gray);}
+  .rm-item.dev{background:var(--haze);}
+  .rm-item.pri{background:var(--white);border:1.5px solid var(--pulse);}
+  .rm-legend{display:flex;gap:18px;margin-top:16px;margin-bottom:6px;font-size:11.5px;color:var(--gray);font-family:'Inter',sans-serif;}
+  .rm-legend span{display:inline-flex;align-items:center;gap:7px;}
+  .rm-legend .sw{width:13px;height:13px;border-radius:4px;display:inline-block;}
+  .rm-legend .sw.dev{background:var(--haze);}
+  .rm-legend .sw.pri{background:var(--white);border:1.5px solid var(--pulse);}
+  @media (max-width:760px){
+    .rm-grid{grid-template-columns:1fr;}
+  }
+
+  /* VISION PRODUIT CARDS */
+  .vp-card{border:1px solid var(--line);border-radius:16px;padding:24px 26px;margin-bottom:18px;background:linear-gradient(160deg,var(--beige),var(--white));}
+  .vp-card:last-child{margin-bottom:0;}
+  .vp-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+  .vp-card h3{font-family:'Crimson Pro',serif;font-weight:600;font-size:19px;color:var(--darkblue);margin:0;}
+  .vp-card p{font-size:13px;color:var(--black);font-family:'Inter',sans-serif;line-height:1.7;margin:0 0 14px;}
+  .vp-sub{font-weight:700;color:var(--pulse-dark);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px;font-family:'Inter',sans-serif;}
+  .vp-card ul{margin:0 0 4px;padding-left:0;list-style:none;}
+  .vp-card li{font-size:12.5px;color:var(--black);font-family:'Inter',sans-serif;line-height:1.7;padding-left:20px;position:relative;margin-bottom:3px;}
+  .vp-card li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:2px;background:var(--pulse);}
+  .vp-status{display:inline-block;font-size:11px;font-weight:700;color:#8a5a20;background:var(--amber-soft);padding:4px 12px;border-radius:999px;margin-top:6px;}
+  .vp-status.available{color:var(--green);background:rgba(31,122,77,.12);}
+
+  footer{text-align:center;color:var(--gray);font-size:11.5px;margin-top:36px;font-family:'Inter',sans-serif;}
+
+  @media (max-width:760px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    table{font-size:12px;}
+    th,td{padding:9px 10px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="wire" viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" fill="none">
+      <path d="M40 0 C 90 90, 10 120, 60 150" stroke="#fff" stroke-width="1.2"/>
+      <path d="M200 20 C 320 40, 260 160, 400 190" stroke="#fff" stroke-width="1.2"/>
+      <path d="M180 130 C 120 190, 260 230, 340 130" stroke="#fff" stroke-width="1.2"/>
+      <ellipse cx="330" cy="60" rx="70" ry="18" stroke="#fff" stroke-width="1" transform="rotate(-18 330 60)"/>
+    </svg>
+    <h1>Rapport de performance</h1>
+    <p>Résonance 78 — Vue consolidée des 2 centres — Juin → Août 2026</p>
+    <span class="badge">8 287 appels traités · 1 167 RDV pris en autonomie · Juin-Juillet-Août 2026</span>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('perf', this)">
+      <span class="tb-name">Performance</span>
+      <span class="tb-sub">Juin - Août 2026</span>
+    </button>
+    <button class="tab-btn" onclick="showTab('vp', this)">
+      <span class="tb-name">Vision produit</span>
+      <span class="tb-sub">Avis patient · Liste d'attente · Réactivation</span>
+    </button>
+  </div>
+
+  <!-- ============ PANEL PERFORMANCE ============ -->
+  <div class="panel active" id="panel-perf">
+
+    <!-- 1. INDICATEURS CLES -->
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span>Indicateurs clés</h2>
+        <span class="pill">Juin - Août 2026</span>
+      </div>
+      <p class="sub">Vue d'ensemble consolidée sur les 2 centres Résonance 78, sur les trois mois analysés</p>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="label">Taux d'automatisation<br>(sans humain, sans transfert, sans tâche)</div>
+          <div class="value">61,0%</div>
+          <div class="foot">Sur 8 287 appels traités</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Taux de transformation prise de RDV</div>
+          <div class="value">46,1%</div>
+          <div class="foot">1 167 RDV / 2 533 demandes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">CSAT patients<br>(note sur 5)</div>
+          <div class="value green">4,19</div>
+          <div class="foot">935 répondants sur la période</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Nombre d'appels traités</div>
+          <div class="value">8 287</div>
+          <div class="foot">Juin - Août 2026</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Demandes de rendez-vous</div>
+          <div class="value small">2 533</div>
+          <div class="foot">30,6% des appels traités</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">RDV pris en autonomie par Vocca</div>
+          <div class="value small">1 167</div>
+          <div class="foot">46,1% des demandes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Tâches créées</div>
+          <div class="value small">2 758</div>
+          <div class="foot">Cumul sur la période</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Appels transférés</div>
+          <div class="value small">476</div>
+          <div class="foot">5,7% des appels traités</div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:16px;margin-bottom:0;"><strong>Le taux d'automatisation recule en juillet (59,1%) avant de repartir nettement à la hausse en août (63,0%), au-dessus du niveau de juin (61,6%). Le taux de transformation des demandes de RDV progresse sur les trois mois (45,5% → 46,3% → 46,8%). Le CSAT reste stable et bon (4,22 · 4,14 · 4,22).</strong></p>
+    </section>
+
+    <!-- 2. EVOLUTION MENSUELLE -->
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Évolution mensuelle</h2>
+        <span class="pill">Juin vs Juillet vs Août</span>
+      </div>
+      <p class="sub">Comparaison des indicateurs clés mois par mois, sur l'ensemble des 2 centres</p>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Indicateur</th><th>Juin 2026</th><th>Juillet 2026</th><th>Août 2026</th><th class="total">Total</th></tr></thead>
+        <tbody>
+          <tr><td>Appels traités</td><td>3 690</td><td>2 995</td><td>1 602</td><td class="total">8 287</td></tr>
+          <tr><td>Demandes de rendez-vous</td><td>1 109</td><td>909</td><td>515</td><td class="total">2 533</td></tr>
+          <tr><td>Taux d'automatisation</td><td>61,6%</td><td>59,1%</td><td>63,0%</td><td class="total">61,0%</td></tr>
+          <tr><td>Transformation RDV</td><td>45,5%</td><td>46,3%</td><td>46,8%</td><td class="total">46,1%</td></tr>
+          <tr><td>RDV pris en autonomie</td><td>505</td><td>421</td><td>241</td><td class="total">1 167</td></tr>
+          <tr><td>RDV hors horaire d'ouverture</td><td>93</td><td>68</td><td>28</td><td class="total">189</td></tr>
+          <tr><td>Tâches créées</td><td>1 212</td><td>1 023</td><td>523</td><td class="total">2 758</td></tr>
+          <tr><td>Appels transférés</td><td>204</td><td>203</td><td>69</td><td class="total">476</td></tr>
+          <tr class="subtle"><td>CSAT patients (note sur 5)</td><td>4,22</td><td>4,14</td><td>4,22</td><td class="total">4,19</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <!-- 3. REPARTITION DES APPELS -->
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Répartition des appels</h2>
+      </div>
+      <p class="sub">Motifs d'appel sur l'ensemble des 8 287 appels traités (juin-juillet-août, 2 centres)</p>
+      <div class="repartition-card">
+        <div class="repartition-grid">
+          <div class="donut-wrap">
+            <div class="donut" style="background:conic-gradient(from 0deg,
+                #3568F6 0% 30.6%,
+                #5B8AC7 30.6% 59.9%,
+                #D98A3D 59.9% 77.6%,
+                #8E6FB3 77.6% 85.3%,
+                #6b7480 85.3% 90.6%,
+                #3F9C7B 90.6% 94.1%,
+                #B23A48 94.1% 96.6%,
+                #0B355F 96.6% 98.9%,
+                #C9A227 98.9% 100%,
+                #2AA9B8 100% 100%);">
+              <div class="donut-hole">
+                <div class="donut-total">8 287</div>
+                <div class="donut-label">appels</div>
+              </div>
+            </div>
+          </div>
+          <div class="legend-list">
+            <div class="legend-row">
+              <span class="dot" style="background:#3568F6"></span>
+              <span class="legend-label">Prise de rendez-vous</span>
+              <span class="legend-count">2 533</span>
+              <span class="legend-pct">30,6%</span>
+            </div>
+            <div class="legend-row">
+              <span class="dot" style="background:#5B8AC7"></span>
+              <span class="legend-label">Demande d'information générale</span>
+              <span class="legend-count">2 427</span>
+              <span class="legend-pct">29,3%</span>
+            </div>
+            <div class="legend-row">
+              <span class="dot" style="background:#D98A3D"></span>
+              <span class="legend-label">Demande d'information spécifique</span>
+              <span class="legend-count">1 471</span>
+              <span class="legend-pct">17,8%</span>
+            </div>
+            <div class="legend-row">
+              <span class="dot" style="background:#8E6FB3"></span>
+              <span class="legend-label">Mise en relation secrétariat</span>
+              <span class="legend-count">638</span>
+              <span class="legend-pct">7,7%</span>
+            </div>
+            <div class="legend-row">
+              <span class="dot" style="background:#6b7480"></span>
+              <span class="legend-label">Accueil &amp; orientation</span>
+              <span class="legend-count">437</span>
+              <span class="legend-pct">5,3%</span>
+            </div>
+            <div class="legend-row">
+              <span class="dot" style="background:#3F9C7B"></span>
+              <span class="legend-label">Confirmation de RDV</span>
+              <span class="legend-count">294</span>
+              <span class="legend-pct">3,5%</span>
+            </div>
+            <div class="legend-row">
+              <span class="dot" style="background:#B23A48"></span>
+              <span class="legend-label">Déplacement de RDV</span>
+              <span class="legend-count">206</span>
+              <span class="legend-pct">2,5%</span>
+            </div>
+            <div class="legend-row">
+              <span class="dot" style="background:#0B355F"></span>
+              <span class="legend-label">Annulation de RDV</span>
+              <span class="legend-count">188</span>
+              <span class="legend-pct">2,3%</span>
+            </div>
+            <div class="legend-row">
+              <span class="dot" style="background:#C9A227"></span>
+              <span class="legend-label">Signalement de retard</span>
+              <span class="legend-count">89</span>
+              <span class="legend-pct">1,1%</span>
+            </div>
+            <div class="legend-row">
+              <span class="dot" style="background:#2AA9B8"></span>
+              <span class="legend-label">Numéro en liste blanche</span>
+              <span class="legend-count">4</span>
+              <span class="legend-pct">0,0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. AUTOMATISATION MODIFICATION / ANNULATION -->
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></span>Automatisation — modifications &amp; annulations de RDV</h2>
+        <span class="pill">Cumul juin-août</span>
+      </div>
+      <p class="sub">Part des demandes traitées de bout en bout par Vocca, sans intervention humaine</p>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Indicateur</th><th>Demandes</th><th>Réalisées en autonomie</th><th class="total">Taux d'automatisation</th></tr></thead>
+        <tbody>
+          <tr><td>Modification de RDV</td><td>206</td><td>95</td><td class="total">46,1%</td></tr>
+          <tr><td>Annulation de RDV</td><td>188</td><td>108</td><td class="total">57,4%</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="sub" style="margin-top:14px;margin-bottom:0;"><strong>L'automatisation des modifications de RDV progresse nettement sur les trois mois (38,9% → 50,6% → 54,3%) et dépasse désormais celle des annulations, plus irrégulière (56,3% → 60,9% → 53,1%).</strong></p>
+      <div class="mockup" style="margin-top:16px;">
+        <div class="mh">🔧 Comment augmenter encore ces taux</div>
+        <p>Désormais, <strong>2 paramètres distincts</strong> pilotent séparément la prise de RDV d'un côté, et la modification/annulation de l'autre. Il est possible de garder la <strong>prise de RDV</strong> en transfert d'appel ou en création de tâche là où c'est nécessaire, tout en laissant <strong>l'autonomie à Vocca pour la modification et l'annulation</strong> des RDV existants — deux actions à plus faible risque et à forte valeur d'automatisation.</p>
+      </div>
+    </section>
+
+    <!-- 5. CONFIGURATION ACTUELLE -->
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>Configuration actuelle</h2>
+      </div>
+      <p class="sub">Paramétrage des motifs de prise en charge, cumul des 2 centres</p>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Indicateur</th><th class="total">Valeur</th></tr></thead>
+        <tbody>
+          <tr><td>Nombre de motifs configurés</td><td class="total">960</td></tr>
+          <tr><td>Ouverts à l'autonomie Vocca</td><td class="total">494 <span class="pct">(51,5%)</span></td></tr>
+          <tr><td>Fermés → création de tâche</td><td class="total">152 <span class="pct">(15,8%)</span></td></tr>
+          <tr><td>Transférés secrétariat</td><td class="total">0 <span class="pct">(0,0%)</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="sub" style="margin-top:14px;margin-bottom:0;">Plus de la moitié des motifs (51,5%) sont désormais ouverts à la gestion en autonomie par Vocca, contre 15,8% fermés en création de tâche — une nette progression de la configuration, avec encore une marge pour aller plus loin.</p>
+    </section>
+
+    <!-- 6. TAUX DE TRANSFERT PAR MOIS -->
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M8 21H3v-5M21 3l-7.5 7.5M3 21l7.5-7.5"/></svg></span>Taux de transfert par mois</h2>
+        <span class="pill">Résonance 78</span>
+      </div>
+      <p class="sub">Pourcentage d'appels transférés parmi les appels traités, mois par mois</p>
+      <div class="bars-list">
+        <div class="bar-item"><div class="bl">Juin 2026</div><div class="bar-track"><div class="bar-fill" style="width:80.9%"></div></div><div class="bv">5,5%</div></div>
+        <div class="bar-item"><div class="bl">Juillet 2026</div><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><div class="bv">6,8%</div></div>
+        <div class="bar-item"><div class="bl">Août 2026</div><div class="bar-track"><div class="bar-fill" style="width:63.2%"></div></div><div class="bv">4,3%</div></div>
+      </div>
+      <p class="sub" style="margin-top:14px;margin-bottom:0;">Le taux de transfert recule nettement en août (4,3%) après une hausse en juillet (6,8%), pour une moyenne de 5,7% sur les trois mois. Ce taux reste porté quasi intégralement par le centre de Maison-Lafitte (cf. Focus par centre).</p>
+    </section>
+
+    <!-- 7. POURQUOI LES APPELS N'ABOUTISSENT PAS -->
+    <section class="highlight">
+      <div class="section-head">
+        <h2><span class="icn amber"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg></span>Pourquoi les appels n'aboutissent pas</h2>
+        <span class="pill amber">Juin-Juillet-Août 2026</span>
+      </div>
+      <p class="sub">Répartition en pourcentage des causes de non-aboutissement d'une demande de rendez-vous (vue globale, hors chiffres bruts)</p>
+      <div class="bars-list">
+        <div class="bar-item"><div class="bl">Demande du patient (création de tâche)</div><div class="bar-track"><div class="bar-fill amber" style="width:100%"></div></div><div class="bv">22,5%</div></div>
+        <div class="bar-item"><div class="bl">Motif configuré en création de tâche</div><div class="bar-track"><div class="bar-fill amber" style="width:80.6%"></div></div><div class="bv">18,2%</div></div>
+        <div class="bar-item"><div class="bl">Créneaux refusés par le patient</div><div class="bar-track"><div class="bar-fill" style="width:63.2%"></div></div><div class="bv">14,3%</div></div>
+        <div class="bar-item"><div class="bl">Aucune disponibilité renseignée</div><div class="bar-track"><div class="bar-fill" style="width:58.2%"></div></div><div class="bv">13,1%</div></div>
+      </div>
+      <p class="sub" style="margin-top:16px;margin-bottom:0;"><strong>Les demandes explicites du patient à être recontacté (22,5%) et les motifs configurés en création de tâche (18,2%) restent les deux premières causes de non-aboutissement, suivies par les créneaux refusés par le patient (14,3%) et l'absence de disponibilité renseignée (13,1%).</strong></p>
+    </section>
+
+    <!-- 8. FOCUS PAR CENTRE -->
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span>Focus par centre</h2>
+        <span class="pill">Vue par centre · Cumul juin-août</span>
+      </div>
+      <p class="sub">Comparaison des 2 centres Résonance 78 sur la période</p>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Centre</th><th>Appels traités</th><th>Demandes RDV</th><th>RDV autonomie</th><th>Taux auto.</th><th>Taux transfo.</th><th>Taux transfert</th><th class="total">CSAT</th></tr></thead>
+        <tbody>
+          <tr><td>78-Maison-Lafitte</td><td>2 297</td><td>670</td><td>258</td><td>57,2%</td><td>38,5%</td><td>20,7%</td><td class="total">4,29</td></tr>
+          <tr><td>78-Sartrouville</td><td>5 990</td><td>1 863</td><td>909</td><td>62,4%</td><td>48,8%</td><td>0,0%</td><td class="total">4,16</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="sub" style="margin-top:14px;margin-bottom:0;">Le centre de Maison-Lafitte concentre la quasi-totalité des transferts du groupe (476 sur 476, soit 20,7% de ses propres appels), alors que Sartrouville n'en compte aucun. Sartrouville affiche par ailleurs de meilleurs taux d'automatisation (62,4%) et de transformation (48,8%) que Maison-Lafitte — un écart à investiguer, potentiellement lié à des différences de configuration entre les deux centres.</p>
+    </section>
+
+  </div>
+
+  <!-- ============ PANEL VISION PRODUIT ============ -->
+  <div class="panel" id="panel-vp">
+
+    <section>
+      <div class="section-head">
+        <h2><span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span>Vision produit</h2>
+        <span class="pill">Roadmap à venir</span>
+      </div>
+      <p class="sub">Vue d'ensemble de la roadmap produit Vocca, juillet à septembre 2026</p>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Appels sortants</h3>
+          <span class="vp-status available">Déjà disponible</span>
+        </div>
+        <p style="margin-bottom:0;">Vocca peut déjà déclencher des campagnes d'appels sortants pour vos patients : annulation en masse en cas d'absence imprévue d'un praticien, et confirmation de rendez-vous multicanal (SMS, WhatsApp et appel), avec un message engageant et adapté au motif de la consultation.</p>
+      </div>
+
+      <div class="rm-grid">
+        <div class="rm-head">Juillet</div>
+        <div class="rm-head">Août</div>
+        <div class="rm-head">Septembre</div>
+
+        <div class="rm-item pri" style="grid-column:3;grid-row:2;">
+          <h4>Déplacer toutes les fonctionnalités dans le tableau de bord client</h4>
+          <p>Centraliser le pilotage des paramètres directement depuis le tableau de bord client.</p>
+        </div>
+
+        <div class="rm-item dev" style="grid-column:1 / 3;grid-row:3;">
+          <h4>Liste d'attente</h4>
+          <p>Recontacter automatiquement les patients dès qu'un créneau se libère.</p>
+        </div>
+        <div class="rm-item pri" style="grid-column:3;grid-row:3;">
+          <h4>Réactiver les patients</h4>
+          <p>Campagnes de reprise de contact automatisées auprès des patients inactifs.</p>
+        </div>
+
+        <div class="rm-item dev" style="grid-column:1 / 3;grid-row:4;">
+          <h4>Scénarios (ordonnance, urgence, ...)</h4>
+          <p>Prise en charge de parcours d'appel spécifiques selon le motif.</p>
+        </div>
+
+        <div class="rm-item dev" style="grid-column:1;grid-row:5;">
+          <h4>Amélioration onglet analytique</h4>
+          <p>Enrichissement du reporting et des indicateurs disponibles dans l'outil.</p>
+        </div>
+        <div class="rm-item pri" style="grid-column:2 / 4;grid-row:5;">
+          <h4>Avis Patients</h4>
+          <p>Collecte automatisée de l'avis patient après le rendez-vous.</p>
+        </div>
+
+        <div class="rm-item pri" style="grid-column:3;grid-row:6;">
+          <h4>Chatbot en ligne pour prendre RDV depuis le site de la clinique</h4>
+          <p>Prise de RDV en autonomie directement depuis le site web du centre.</p>
+        </div>
+      </div>
+      <div class="rm-legend">
+        <span><span class="sw dev"></span>En développement</span>
+        <span><span class="sw pri"></span>Priorisé</span>
+      </div>
+
+      <h3 style="font-family:'Crimson Pro',serif;font-weight:600;font-size:19px;color:var(--darkblue);margin:28px 0 6px;">Une roadmap construite avec vous</h3>
+      <p class="sub" style="margin-top:0;">Notre feuille de route se construit avec nos clients, à partir de vos retours terrain. Zoom sur les quatre fonctionnalités les plus pertinentes pour Résonance 78.</p>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Avis patient</h3>
+        </div>
+        <p>Après un rendez-vous, le patient reçoit un SMS pour évaluer son expérience. Selon la note donnée, le centre peut définir une redirection : vers son CRM pour les retours bas, ou vers Google pour les notes élevées. Une interface permet ensuite de suivre, traiter et analyser l'ensemble des avis patients.</p>
+        <div class="vp-sub">Intérêt client</div>
+        <ul>
+          <li>Générer davantage d'avis positifs publics.</li>
+          <li>Identifier et traiter les insatisfactions avant qu'elles ne deviennent publiques.</li>
+          <li>Centraliser le suivi de la réputation patient du centre.</li>
+        </ul>
+      </div>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Liste d'attente — v1</h3>
+        </div>
+        <p>Quand aucun créneau n'est disponible pendant l'appel, le bot propose au patient d'être ajouté à une liste d'attente. Si un créneau se libère — notamment à la suite d'une annulation — le patient reçoit un SMS avec un lien vers l'interface patient pour réserver en ligne. Une annulation de RDV peut ainsi alimenter automatiquement la liste d'attente. Cette fonctionnalité permettrait de pallier directement la cause « aucune disponibilité renseignée », qui représente 13,1% des causes recensées sur Résonance 78.</p>
+        <div class="vp-sub">Intérêt client</div>
+        <ul>
+          <li>Réduire les créneaux perdus.</li>
+          <li>Transformer des demandes non satisfaites en rendez-vous.</li>
+          <li>Poser la première brique de la prise de rendez-vous en ligne.</li>
+        </ul>
+        <span class="vp-status">Statut : première version attendue fin août / début septembre 2026</span>
+      </div>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Liste d'attente — v2 : proposer un rendez-vous plus tôt</h3>
+        </div>
+        <p>Cette deuxième version cible les patients qui ont déjà un rendez-vous programmé. Si un créneau plus proche se libère, Vocca peut leur proposer automatiquement de l'avancer.</p>
+        <div class="vp-sub">Cas d'usage</div>
+        <ul>
+          <li>Un patient a un rendez-vous dans plusieurs semaines.</li>
+          <li>Un créneau antérieur se libère.</li>
+          <li>Le patient reçoit une proposition pour avancer son rendez-vous.</li>
+        </ul>
+        <div class="vp-sub">Valeur</div>
+        <ul>
+          <li>Réduire les délais perçus par les patients.</li>
+          <li>Optimiser le remplissage des agendas.</li>
+          <li>Fonctionnalité particulièrement utile pour les spécialités à forte tension sur les délais de rendez-vous, comme la radiologie.</li>
+        </ul>
+      </div>
+
+      <div class="vp-card">
+        <div class="vp-head">
+          <h3>Réactivation patient</h3>
+        </div>
+        <p>Vocca envoie automatiquement un message à un patient qui n'est pas revenu depuis un délai défini, pour un motif de consultation donné.</p>
+        <div class="vp-sub">Exemple</div>
+        <p style="margin-bottom:0;">Un patient qui n'a pas consulté depuis 6 à 12 mois peut recevoir une relance afin de reprendre rendez-vous.</p>
+        <div class="vp-sub">Valeur</div>
+        <ul>
+          <li>Réactiver une base patients existante.</li>
+          <li>Générer des rendez-vous supplémentaires sans acquisition de nouveaux patients.</li>
+        </ul>
+      </div>
+
+    </section>
+
+  </div>
+
+  <footer>Rapport généré le 27 août 2026 — données Vocca, Résonance 78 (2 centres : Maison-Lafitte, Sartrouville), Juin → Août 2026.</footer>
+</div>
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('panel-' + id).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
